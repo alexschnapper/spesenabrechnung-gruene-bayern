@@ -36,10 +36,14 @@ export interface Sonstige {
 
 export interface Abrechnung {
   version: 1;
-  name: string;
-  anschrift: string;
+  vorname: string;
+  nachname: string;
+  strasse: string; // Straße und Hausnummer
+  plz: string; // genau 5 Ziffern
+  wohnort: string;
   email: string;
-  funktion: string;
+  funktion: string; // Id aus config/funktionen.ts
+  anlass: string; // z. B. Landesdelegiertenkonferenz
   bank: string;
   iban: string;
   bic: string;

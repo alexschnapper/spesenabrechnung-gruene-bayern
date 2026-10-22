@@ -97,3 +97,4 @@ li.hinweis { background: var(--warn-bg); color: var(--warn); }
 .notice { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; margin-bottom: 16px; }
 .small { font-size: 0.85rem; color: var(--muted); }
 footer { padding: 8px 0 32px; font-size: 0.85rem; color: var(--muted); }
+.hint { color: var(--err); font-size: 0.82rem; }

@@ -19,7 +19,8 @@ describe('PDF', () => {
     const leer = await erzeugePdf(leereAbrechnung(), { entwurf: true });
     expect((await PDFDocument.load(leer)).getPageCount()).toBeGreaterThanOrEqual(2);
     const d = beispielAbrechnung();
-    d.name = 'Zoë 😀 Łukasz';
+    d.vorname = 'Zoë 😀';
+    d.nachname = 'Łukasz';
     d.funktion = 'x'.repeat(500);
     await expect(erzeugePdf(d)).resolves.toBeInstanceOf(Uint8Array);
   });
