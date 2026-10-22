@@ -4,10 +4,14 @@ import type { Abrechnung } from './types';
 /** Beispiel-Abrechnung (frei erfunden) für Tests und die Beispiel-PDF */
 export function beispielAbrechnung(): Abrechnung {
   const d = leereAbrechnung();
-  d.name = 'Erika Mustermann';
-  d.anschrift = 'Musterstraße 1, 91522 Ansbach';
+  d.vorname = 'Erika';
+  d.nachname = 'Mustermann';
+  d.strasse = 'Musterstraße 1';
+  d.plz = '91522';
+  d.wohnort = 'Ansbach';
   d.email = 'erika@example.org';
-  d.funktion = 'Delegierte zur Landesdelegiertenkonferenz (LDK), gewählt von der Kreismitgliederversammlung';
+  d.funktion = 'delegierte';
+  d.anlass = 'Landesdelegiertenkonferenz (LDK), gewählt von der Kreismitgliederversammlung';
   d.bank = 'Beispielbank';
   d.iban = 'DE89 3704 0044 0532 0130 00';
   d.bic = 'COBADEFFXXX';

@@ -19,6 +19,37 @@ describe('IBAN', () => {
   });
 });
 
+describe('Eingabefelder', () => {
+  const texte = (mod: (d: ReturnType<typeof beispielAbrechnung>) => void) => {
+    const d = beispielAbrechnung();
+    mod(d);
+    return fehlerTexte(d);
+  };
+  it('PLZ: genau 5 Ziffern', () => {
+    expect(texte((d) => (d.plz = '9152')).some((t) => t.includes('5 Ziffern'))).toBe(true);
+    expect(texte((d) => (d.plz = '9152a')).some((t) => t.includes('5 Ziffern'))).toBe(true);
+    expect(texte((d) => (d.plz = '')).some((t) => t.includes('Postleitzahl fehlt'))).toBe(true);
+    expect(texte((d) => (d.plz = '91522'))).toEqual([]);
+  });
+  it('BIC: 8 oder 11 Zeichen, leer erlaubt', () => {
+    expect(texte((d) => (d.bic = 'COBADEFF'))).toEqual([]);
+    expect(texte((d) => (d.bic = 'COBADEFFXXX'))).toEqual([]);
+    expect(texte((d) => (d.bic = ''))).toEqual([]);
+    expect(texte((d) => (d.bic = 'COBADEF')).some((t) => t.includes('BIC'))).toBe(true);
+    expect(texte((d) => (d.bic = 'COBADEFFXX')).some((t) => t.includes('BIC'))).toBe(true);
+  });
+  it('Pflichtfelder Name, Straße, Wohnort, Funktion, Anlass', () => {
+    const f = texte((d) => {
+      d.nachname = '';
+      d.strasse = '';
+      d.wohnort = '';
+      d.funktion = '';
+      d.anlass = '';
+    });
+    for (const w of ['Nachname', 'Straße', 'Wohnort', 'Funktion', 'Anlass']) expect(f.some((t) => t.includes(w))).toBe(true);
+  });
+});
+
 describe('Prüfung', () => {
   it('Beispielabrechnung hat keine Fehler', () => {
     expect(fehlerTexte()).toEqual([]);
@@ -40,10 +71,10 @@ describe('Prüfung', () => {
   });
   it('Pflichtangaben und ungültige IBAN', () => {
     const d = beispielAbrechnung();
-    d.name = '';
+    d.vorname = '';
     d.iban = 'DE00 0000';
     const f = fehlerTexte(d);
-    expect(f.some((t) => t.includes('Name'))).toBe(true);
+    expect(f.some((t) => t.includes('Vorname'))).toBe(true);
     expect(f.some((t) => t.includes('IBAN'))).toBe(true);
   });
   it('warnt bei abgelaufener Spendenfrist (3 Monate)', () => {

@@ -5,6 +5,7 @@ import { VERBAND } from '../config/verband';
 import { berechne, erstattungSonstige } from '../logic/calc';
 import type { Ergebnis } from '../logic/calc';
 import { formatCent, formatDatum, parseEuro, parseZahl } from '../logic/money';
+import { anschriftText, funktionText, vollerName } from '../logic/person';
 import type { Abrechnung, SonstigeArt, Tag } from '../logic/types';
 
 export interface PdfOptionen {
@@ -131,13 +132,13 @@ function deckblatt(p: PDFPage, d: Abrechnung, e: Ergebnis, f: Fonts, o: PdfOptio
     linie(p, L, y, 277, y);
   });
 
-  feld(p, f, 'Name:', d.name, L, 190, R, L + 70);
-  feld(p, f, 'Anschrift:', d.anschrift, L, 212, R, L + 70);
+  feld(p, f, 'Name:', vollerName(d), L, 190, R, L + 70);
+  feld(p, f, 'Anschrift:', anschriftText(d), L, 212, R, L + 70);
   feld(p, f, 'e-mail Adresse:', d.email, L, 234, R, L + 70);
 
   text(p, 'Funktion/ Tätigkeit und Anlass', L, 258, 10, f.bold, { color: BLAU });
   text(p, '(durch Erstattungsordnung gedeckt, gegebenenfalls durch Beschluss belegen)', L, 268, 7, f.bold);
-  const fz = umbrechen(d.funktion, f.bold, 9, R - L - 4, 2);
+  const fz = umbrechen(funktionText(d), f.bold, 9, R - L - 4, 2);
   for (let i = 0; i < 2; i++) {
     const y = 285 + i * 16;
     if (fz[i]) text(p, fz[i], L + 2, y - 3, 9, f.bold);
@@ -377,7 +378,7 @@ function aufstellung(doc: PDFDocument, d: Abrechnung, e: Ergebnis, f: Fonts): vo
 
   while (idx < tage.length || erste) {
     const p = doc.addPage(A4_QUER);
-    text(p, `Spesenabrechnung – ${d.name}`, TAB_X, 28, 8, f.font);
+    text(p, `Spesenabrechnung – ${vollerName(d)}`, TAB_X, 28, 8, f.font);
     text(p, `${VERBAND.kreisverband} · Sätze ${RATES.gueltigkeitsjahr}`, TAB_X + TAB_W, 28, 8, f.font, { align: 'r' });
     text(p, 'Fahrtkosten und Tagegelder', TAB_X, 50, 13, f.bold);
     let y = 60;
@@ -463,7 +464,7 @@ function anlageSonstige(doc: PDFDocument, d: Abrechnung, e: Ergebnis, f: Fonts):
   let i = 0;
   while (i < d.sonstige.length) {
     const p = doc.addPage(A4_HOCH);
-    text(p, `Spesenabrechnung – ${d.name}`, L, 28, 8, f.font);
+    text(p, `Spesenabrechnung – ${vollerName(d)}`, L, 28, 8, f.font);
     text(p, 'Anlage: Sonstige Aufwendungen (nur gegen Vorlage der Belege)', L, 52, 13, f.bold);
     let y = 66;
     let x = L;
@@ -504,8 +505,8 @@ function anlageSonstige(doc: PDFDocument, d: Abrechnung, e: Ergebnis, f: Fonts):
 export async function erzeugePdf(d: Abrechnung, opt: PdfOptionen = {}): Promise<Uint8Array> {
   const e = berechne(d);
   const doc = await PDFDocument.create();
-  doc.setTitle(`Spesenabrechnung ${d.name}`.trim());
-  doc.setAuthor(d.name || 'Spesenabrechnung');
+  doc.setTitle(`Spesenabrechnung ${vollerName(d)}`.trim());
+  doc.setAuthor(vollerName(d) || 'Spesenabrechnung');
   doc.setCreator('spesenabrechnung-gruene-bayern');
   const f: Fonts = {
     font: await doc.embedFont(StandardFonts.Helvetica),

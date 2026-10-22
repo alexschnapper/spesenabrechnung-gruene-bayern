@@ -2,7 +2,9 @@
   import { berechne } from './logic/calc';
   import { leereAbrechnung, neueSonstige, neuerTag, normalisiere } from './logic/defaults';
   import { formatEuro } from './logic/money';
-  import { pruefe } from './logic/validate';
+  import { bicBereinigen, bicGueltig, nurZiffern, plzGueltig, vollerName } from './logic/person';
+  import { ibanGueltig, pruefe } from './logic/validate';
+  import { FUNKTIONEN } from './config/funktionen';
   import type { Abrechnung } from './logic/types';
   import { erzeugePdf } from './pdf/pdf';
   import { herunterladen, ladeDatei, ladeEntwurf, loescheEntwurf, speichereEntwurf } from './storage';
@@ -54,13 +56,13 @@
 
   async function pdf(entwurf: boolean) {
     const bytes = await erzeugePdf($state.snapshot(data) as Abrechnung, { entwurf });
-    const name = (data.name || 'Abrechnung').replace(/[^\p{L}\p{N}]+/gu, '_');
+    const name = (vollerName(data) || 'Abrechnung').replace(/[^\p{L}\p{N}]+/gu, '_');
     herunterladen(bytes as unknown as BlobPart, `Spesenabrechnung_${name}_${heute}.pdf`, 'application/pdf');
     erzeugt = true;
   }
 
   function jsonExport() {
-    const name = (data.name || 'Abrechnung').replace(/[^\p{L}\p{N}]+/gu, '_');
+    const name = (vollerName(data) || 'Abrechnung').replace(/[^\p{L}\p{N}]+/gu, '_');
     herunterladen(JSON.stringify($state.snapshot(data), null, 2), `Spesenabrechnung_${name}.json`, 'application/json');
   }
 
@@ -99,26 +101,72 @@
   <section>
     <h2>Persönliche Angaben</h2>
     <div class="grid">
-      <label class="f">Name
-        <input type="text" bind:value={data.name} autocomplete="name" />
+      <label class="f">Vorname
+        <input type="text" bind:value={data.vorname} autocomplete="given-name" />
       </label>
-      <label class="f">E-Mail
+      <label class="f">Nachname
+        <input type="text" bind:value={data.nachname} autocomplete="family-name" />
+      </label>
+      <label class="f span2">Straße und Hausnummer
+        <input type="text" bind:value={data.strasse} autocomplete="street-address" />
+      </label>
+      <label class="f">PLZ (5 Ziffern)
+        <input
+          type="text"
+          inputmode="numeric"
+          maxlength="5"
+          autocomplete="postal-code"
+          value={data.plz}
+          oninput={(e) => {
+            data.plz = nurZiffern(e.currentTarget.value);
+            e.currentTarget.value = data.plz;
+          }}
+        />
+        {#if data.plz && !plzGueltig(data.plz)}
+          <span class="hint">Bitte genau 5 Ziffern eingeben ({data.plz.length} von 5).</span>
+        {/if}
+      </label>
+      <label class="f">Wohnort
+        <input type="text" bind:value={data.wohnort} autocomplete="address-level2" />
+      </label>
+      <label class="f span2">E-Mail
         <input type="email" bind:value={data.email} autocomplete="email" />
       </label>
-      <label class="f span2">Anschrift
-        <input type="text" bind:value={data.anschrift} autocomplete="street-address" placeholder="Straße, PLZ Ort" />
+      <label class="f">Funktion
+        <select bind:value={data.funktion}>
+          <option value="">Bitte wählen</option>
+          {#each FUNKTIONEN as fn}
+            <option value={fn.id}>{fn.label}</option>
+          {/each}
+        </select>
       </label>
-      <label class="f span2">Funktion / Tätigkeit und Anlass
-        <input type="text" bind:value={data.funktion} placeholder="z. B. Delegierte zur LDK, gewählt von der Kreismitgliederversammlung" />
+      <label class="f">Anlass
+        <input type="text" bind:value={data.anlass} placeholder="z. B. Landesdelegiertenkonferenz" />
       </label>
       <label class="f">Bank
         <input type="text" bind:value={data.bank} />
       </label>
-      <label class="f">BIC
-        <input type="text" bind:value={data.bic} />
+      <label class="f">BIC (8 oder 11 Zeichen)
+        <input
+          type="text"
+          maxlength="11"
+          autocapitalize="characters"
+          autocomplete="off"
+          value={data.bic}
+          oninput={(e) => {
+            data.bic = bicBereinigen(e.currentTarget.value);
+            e.currentTarget.value = data.bic;
+          }}
+        />
+        {#if data.bic && !bicGueltig(data.bic)}
+          <span class="hint">Der BIC hat 8 oder 11 Zeichen ({data.bic.length} eingegeben), z. B. COBADEFFXXX.</span>
+        {/if}
       </label>
       <label class="f span2">IBAN
         <input type="text" bind:value={data.iban} placeholder="DE00 0000 0000 0000 0000 00" />
+        {#if data.iban && !ibanGueltig(data.iban)}
+          <span class="hint">Die IBAN ist noch ungültig (Prüfziffer oder Länge).</span>
+        {/if}
       </label>
     </div>
   </section>

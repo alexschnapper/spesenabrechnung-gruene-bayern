@@ -1,6 +1,7 @@
 import { RATES } from '../config/rates';
 import { formatCent, formatDatum, parseEuro, parseZahl } from './money';
 import { dauerMinuten } from './calc';
+import { bicGueltig, plzGueltig } from './person';
 import type { Ergebnis } from './calc';
 import type { Abrechnung } from './types';
 
@@ -43,9 +44,15 @@ export function pruefe(d: Abrechnung, e: Ergebnis, heute: string): Meldung[] {
   const fehler = (text: string, tagId?: string) => m.push({ stufe: 'fehler', text, tagId });
   const hinweis = (text: string, tagId?: string) => m.push({ stufe: 'hinweis', text, tagId });
 
-  if (!d.name.trim()) fehler('Name fehlt.');
-  if (!d.anschrift.trim()) fehler('Anschrift fehlt.');
-  if (!d.funktion.trim()) fehler('Funktion/Tätigkeit und Anlass fehlen (durch die Erstattungsordnung gedeckt, ggf. durch Beschluss belegen).');
+  if (!d.vorname.trim()) fehler('Vorname fehlt.');
+  if (!d.nachname.trim()) fehler('Nachname fehlt.');
+  if (!d.strasse.trim()) fehler('Straße und Hausnummer fehlen.');
+  if (!d.plz) fehler('Postleitzahl fehlt.');
+  else if (!plzGueltig(d.plz)) fehler('Die Postleitzahl muss aus genau 5 Ziffern bestehen.');
+  if (!d.wohnort.trim()) fehler('Wohnort fehlt.');
+  if (!d.funktion) fehler('Funktion fehlt (Delegierte oder Ersatzdelegierte).');
+  if (!d.anlass.trim()) fehler('Anlass fehlt (durch die Erstattungsordnung gedeckt, ggf. durch Beschluss belegen).');
+  if (d.bic && !bicGueltig(d.bic)) fehler('Der BIC muss aus 8 oder 11 Zeichen bestehen (Buchstaben und Ziffern, z. B. COBADEFFXXX).');
   if (!d.iban.trim()) fehler('IBAN fehlt.');
   else if (!ibanGueltig(d.iban)) fehler('Die IBAN ist ungültig (Prüfziffer oder Länge stimmt nicht).');
   if (!d.email.trim()) hinweis('E-Mail-Adresse fehlt (steht im Formular, für Rückfragen sinnvoll).');
